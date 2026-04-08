@@ -1,5 +1,6 @@
 package com.bookmindai.bookmindai.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -14,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.bookmindai.bookmindai.service.BookStoreService;
 import com.bookmindai.bookmindai.service.ChunkingService;
+import com.bookmindai.bookmindai.service.EmbeddingService;
 import com.bookmindai.bookmindai.service.PdfExtractionService;
 
 @RestController
@@ -24,12 +26,14 @@ public class BookController {
     private final PdfExtractionService pdfService;
     private final BookStoreService bookStore;
     private final ChunkingService chunkingService;
+    private final EmbeddingService embeddingService;
 
-    public BookController(PdfExtractionService pdfService, 
-        BookStoreService bookStore, ChunkingService chunkingService) {
+    public BookController(PdfExtractionService pdfService, BookStoreService bookStore, 
+            ChunkingService chunkingService, EmbeddingService embeddingService) {
         this.pdfService = pdfService;
         this.bookStore = bookStore;
         this.chunkingService = chunkingService;
+        this.embeddingService = embeddingService;
     }
 
     @PostMapping("/upload")
@@ -39,10 +43,18 @@ public class BookController {
             bookStore.storeBook(file.getOriginalFilename() != null ? file.getOriginalFilename() : "Unknown", text);
             List<String> chunks = chunkingService.chunk(text);
             bookStore.storeChunks(chunks);
+            log.info("Embedding {} chunks...", chunks.size());
+            List<List<Double>> embeddings = new ArrayList<>();
+            for (String chunk : chunks) {
+                embeddings.add(embeddingService.embed(chunk));
+            }
+            bookStore.storeEmbeddings(embeddings);
+            log.info("Embedding completed for all chunks");
             return ResponseEntity.ok(Map.of(
                 "status", "success",
                 "message", file.getOriginalFilename(),
-                "character", text.length()
+                "character", text.length(),
+                "embeddings", embeddings.size()
             ));
         } catch (Exception e) {
             log.error("Failed to process PDF: {}", e.getMessage());

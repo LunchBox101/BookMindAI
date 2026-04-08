@@ -10,6 +10,7 @@ public class BookStoreService {
     private String currentBookText;
     private String currentBookName;
     private List<String> currentChunks;
+    private List<List<Double>> currentEmbeddings;
 
     public void storeBook(String bookName, String bookText) {
         this.currentBookName = bookName;
@@ -34,5 +35,13 @@ public class BookStoreService {
 
     public void storeChunks(List<String> chunks) {
         this.currentChunks = chunks;
+    }
+
+    public List<List<Double>> getCurrentEmbeddings() {
+        return currentEmbeddings;
+    }
+
+    public void storeEmbeddings(List<List<Double>> embeddings) {
+        this.currentEmbeddings = embeddings;
     }
 }
