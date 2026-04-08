@@ -1,5 +1,6 @@
 package com.bookmindai.bookmindai.controller;
 
+import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.bookmindai.bookmindai.service.BookStoreService;
+import com.bookmindai.bookmindai.service.ChunkingService;
 import com.bookmindai.bookmindai.service.PdfExtractionService;
 
 @RestController
@@ -21,10 +23,13 @@ public class BookController {
     private static final Logger log = LoggerFactory.getLogger(BookController.class);
     private final PdfExtractionService pdfService;
     private final BookStoreService bookStore;
+    private final ChunkingService chunkingService;
 
-    public BookController(PdfExtractionService pdfService, BookStoreService bookStore) {
+    public BookController(PdfExtractionService pdfService, 
+        BookStoreService bookStore, ChunkingService chunkingService) {
         this.pdfService = pdfService;
         this.bookStore = bookStore;
+        this.chunkingService = chunkingService;
     }
 
     @PostMapping("/upload")
@@ -32,6 +37,8 @@ public class BookController {
         try {
             String text = pdfService.extractText(file.getInputStream());
             bookStore.storeBook(file.getOriginalFilename() != null ? file.getOriginalFilename() : "Unknown", text);
+            List<String> chunks = chunkingService.chunk(text);
+            bookStore.storeChunks(chunks);
             return ResponseEntity.ok(Map.of(
                 "status", "success",
                 "message", file.getOriginalFilename(),
@@ -42,6 +49,4 @@ public class BookController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
-
-
 }
