@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BookMindAI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #06080d; color: #c8d6e5; font-family: 'Rajdhani', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+    header { background: #06080d; border-bottom: 1px solid #1a1030; padding: 13px 24px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+    .logo { font-family: 'Share Tech Mono', monospace; font-size: 20px; letter-spacing: 3px; }
+    .logo .b { color: #00cfff; }
+    .logo .m { color: #bf00ff; }
+    .logo .a { color: #ff2d78; }
+    .logo .i { color: #ffe600; }
+    .status { display: flex; align-items: center; gap: 6px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #bf00ff; letter-spacing: 2px; }
+    .pulse-dot { width: 7px; height: 7px; border-radius: 50%; background: #bf00ff; animation: glow 1.5s infinite; }
+    @keyframes glow { 0%,100% { opacity: .4; } 50% { opacity: 1; } }
+
+    .main { display: grid; grid-template-columns: 265px 1fr; flex: 1; overflow: hidden; }
+
+    .sidebar { border-right: 1px solid #1a1030; padding: 16px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; }
+    .s-label { font-size: 9px; letter-spacing: 4px; margin-bottom: 8px; font-family: 'Share Tech Mono', monospace; }
+    .s-label.cyan { color: #00cfff; }
+    .s-label.pink { color: #ff2d78; }
+    .s-label.purple { color: #bf00ff; }
+
+    .upload-zone { border: 1px dashed #ff2d7844; border-radius: 4px; padding: 18px 12px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; background: #0a0610; cursor: pointer; }
+    .upload-zone:hover { border-color: #ff2d78aa; }
+    .upload-icon-wrap { width: 38px; height: 38px; border: 1px solid #ff2d78; border-radius: 4px; display: flex; align-items: center; justify-content: center; background: #180d1a; }
+    .upload-hint { color: #ff2d7888; font-size: 11px; line-height: 1.6; font-family: 'Share Tech Mono', monospace; }
+    .upload-btn { background: transparent; border: 1px solid #ff2d78; color: #ff2d78; font-size: 10px; letter-spacing: 2px; padding: 8px 0; border-radius: 2px; width: 100%; cursor: pointer; font-family: 'Share Tech Mono', monospace; margin-top: 2px; }
+    #file-input { display: none; }
+
+    .book-card { background: #09060f; border: 1px solid #bf00ff44; border-top: 1px solid #bf00ff; border-radius: 4px; padding: 12px; }
+    .book-name { color: #bf00ff; font-size: 11px; font-family: 'Share Tech Mono', monospace; margin-bottom: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .stat-box { background: #06080d; border: 1px solid #1a1030; border-radius: 3px; padding: 8px; text-align: center; }
+    .stat-val { font-size: 18px; font-weight: 700; font-family: 'Share Tech Mono', monospace; }
+    .stat-val.cyan { color: #00cfff; }
+    .stat-val.yellow { color: #ffe600; }
+    .stat-lbl { color: #4a3a6a; font-size: 8px; letter-spacing: 2px; margin-top: 2px; }
+
+    .embed-bar-wrap { background: #09060f; border: 1px solid #00cfff22; border-radius: 2px; height: 5px; overflow: hidden; margin-top: 6px; }
+    .embed-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #00cfff, #bf00ff, #ff2d78); transition: width 0.3s ease; }
+    .embed-lbl { display: flex; justify-content: space-between; font-size: 9px; color: #00cfff66; font-family: 'Share Tech Mono', monospace; margin-top: 4px; }
+
+    .chat { display: flex; flex-direction: column; overflow: hidden; }
+    .messages { flex: 1; padding: 16px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; }
+    .msg { display: flex; gap: 10px; align-items: flex-start; }
+    .msg-user { flex-direction: row-reverse; }
+    .av { width: 30px; height: 30px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 9px; letter-spacing: 1px; flex-shrink: 0; font-family: 'Share Tech Mono', monospace; }
+    .av-ai { background: #001520; border: 1px solid #00cfff; color: #00cfff; }
+    .av-u { background: #0d0020; border: 1px solid #bf00ff; color: #bf00ff; }
+    .bubble { max-width: 78%; border-radius: 4px; padding: 10px 14px; font-size: 14px; line-height: 1.6; position: relative; }
+    .bubble-ai { background: #070d12; border: 1px solid #00cfff22; color: #a0d8e8; border-left: 2px solid #00cfff; }
+    .bubble-user { background: #0d0618; border: 1px solid #bf00ff22; color: #d0a8f0; border-right: 2px solid #bf00ff; }
+    .tag { display: inline-block; font-size: 9px; letter-spacing: 1px; padding: 2px 6px; border-radius: 2px; margin-bottom: 6px; font-family: 'Share Tech Mono', monospace; }
+    .tag-ai { background: #001520; color: #00cfff; border: 1px solid #00cfff44; }
+    .tag-user { background: #0d0020; color: #bf00ff; border: 1px solid #bf00ff44; }
+    .typing { display: flex; gap: 5px; align-items: center; padding: 2px 0; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; animation: tp 1.2s infinite; }
+    .dot:nth-child(1) { background: #00cfff; animation-delay: 0s; }
+    .dot:nth-child(2) { background: #bf00ff; animation-delay: .2s; }
+    .dot:nth-child(3) { background: #ff2d78; animation-delay: .4s; }
+    @keyframes tp { 0%,100% { opacity: .2; transform: scale(.8); } 50% { opacity: 1; transform: scale(1); } }
+
+    .input-bar { border-top: 1px solid #1a1030; padding: 12px 16px; display: flex; gap: 10px; align-items: center; background: #06080d; flex-shrink: 0; }
+    .input-field { flex: 1; background: #09060f; border: 1px solid #bf00ff44; border-radius: 3px; padding: 9px 14px; color: #d0a8f0; font-size: 14px; font-family: 'Rajdhani', sans-serif; outline: none; }
+    .input-field::placeholder { color: #4a3a6a; }
+    .input-field:focus { border-color: #bf00ff88; }
+    .send-btn { background: transparent; border: 1px solid #ffe600; color: #ffe600; font-size: 10px; letter-spacing: 2px; padding: 9px 18px; border-radius: 2px; cursor: pointer; font-family: 'Share Tech Mono', monospace; white-space: nowrap; }
+    .send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .send-btn:hover:not(:disabled) { background: #ffe60011; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="b">BOOK</span><span class="m">MIND</span><span class="a">A</span><span class="i">I</span>
+  </div>
+  <div class="status">
+    <div class="pulse-dot"></div>
+    <span id="status-text">NEURAL LINK ACTIVE</span>
+  </div>
+</header>
+
+<div class="main">
+  <div class="sidebar">
+    <div>
+      <div class="s-label pink">// UPLOAD BOOK</div>
+      <div class="upload-zone" onclick="document.getElementById('file-input').click()">
+        <div class="upload-icon-wrap">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M9 3v9M6 6l3-3 3 3" stroke="#ff2d78" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M3 12v2a1 1 0 001 1h10a1 1 0 001-1v-2" stroke="#ff2d78" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="upload-hint" id="upload-hint">DROP PDF TO INJECT<br>OR CLICK TO BROWSE</div>
+        <button class="upload-btn">[ INJECT PDF ]</button>
+        <input type="file" id="file-input" accept=".pdf" onchange="handleUpload(event)"/>
+      </div>
+    </div>
+
+    <div>
+      <div class="s-label purple">// ACTIVE NEURAL BOOK</div>
+      <div class="book-card">
+        <div class="book-name" id="book-name">— NO BOOK LOADED —</div>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-val cyan" id="stat-chunks">0</div>
+            <div class="stat-lbl">CHUNKS</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val yellow" id="stat-chars">0</div>
+            <div class="stat-lbl">CHARS</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="s-label cyan">// EMBED MATRIX</div>
+      <div class="embed-bar-wrap">
+        <div class="embed-fill" id="embed-fill"></div>
+      </div>
+      <div class="embed-lbl">
+        <span id="embed-status">AWAITING UPLOAD</span>
+        <span id="embed-pct">0%</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="chat">
+    <div class="messages" id="messages">
+      <div class="msg">
+        <div class="av av-ai">AI</div>
+        <div class="bubble bubble-ai">
+          <div class="tag tag-ai">BOOKMINDAI</div><br>
+          Upload a PDF to begin. I will index the book and answer your questions from the content.
+        </div>
+      </div>
+    </div>
+    <div class="input-bar">
+      <input class="input-field" id="question-input" type="text" placeholder="// QUERY THE NEURAL BOOK..." onkeydown="if(event.key==='Enter') sendQuestion()"/>
+      <button class="send-btn" id="send-btn" onclick="sendQuestion()" disabled>[ EXECUTE ]</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let bookLoaded = false;
+
+  function formatNum(n) {
+    if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+    if (n >= 1000) return (n/1000).toFixed(0) + 'K';
+    return n;
+  }
+
+  async function handleUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    document.getElementById('upload-hint').innerHTML = 'UPLOADING...<br>' + file.name;
+    document.getElementById('embed-status').textContent = 'PROCESSING...';
+    document.getElementById('embed-fill').style.width = '30%';
+    document.getElementById('status-text').textContent = 'INDEXING BOOK...';
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch('/api/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+
+      if (data.status === 'success') {
+        bookLoaded = true;
+        document.getElementById('book-name').textContent = data.filename || file.name;
+        document.getElementById('stat-chunks').textContent = data.embeddings || '—';
+        document.getElementById('stat-chars').textContent = formatNum(data.characters || 0);
+        document.getElementById('embed-fill').style.width = '100%';
+        document.getElementById('embed-status').textContent = (data.embeddings || 0) + ' vectors loaded';
+        document.getElementById('embed-pct').textContent = '100%';
+        document.getElementById('status-text').textContent = 'NEURAL LINK ACTIVE';
+        document.getElementById('send-btn').disabled = false;
+        document.getElementById('upload-hint').innerHTML = 'BOOK INJECTED<br>' + file.name;
+        addMessage('ai', 'Book indexed. ' + (data.embeddings || 0) + ' chunks loaded into neural matrix. Ask me anything.');
+      } else {
+        document.getElementById('upload-hint').innerHTML = 'ERROR — TRY AGAIN';
+        document.getElementById('embed-status').textContent = 'UPLOAD FAILED';
+        document.getElementById('embed-fill').style.width = '0%';
+      }
+    } catch (e) {
+      document.getElementById('upload-hint').innerHTML = 'ERROR — TRY AGAIN';
+    }
+  }
+
+  function addMessage(type, text) {
+    const messages = document.getElementById('messages');
+    const div = document.createElement('div');
+    div.className = 'msg' + (type === 'user' ? ' msg-user' : '');
+    div.innerHTML = `
+      <div class="av av-${type === 'ai' ? 'ai' : 'u'}">${type === 'ai' ? 'AI' : 'U'}</div>
+      <div class="bubble bubble-${type === 'ai' ? 'ai' : 'user'}">
+        <div class="tag tag-${type === 'ai' ? 'ai' : 'user'}">${type === 'ai' ? 'BOOKMINDAI' : 'YOU'}</div><br>
+        ${text}
+      </div>`;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+    return div;
+  }
+
+  function addTyping() {
+    const messages = document.getElementById('messages');
+    const div = document.createElement('div');
+    div.className = 'msg';
+    div.id = 'typing-indicator';
+    div.innerHTML = `
+      <div class="av av-ai">AI</div>
+      <div class="bubble bubble-ai">
+        <div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      </div>`;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  async function sendQuestion() {
+    const input = document.getElementById('question-input');
+    const question = input.value.trim();
+    if (!question || !bookLoaded) return;
+
+    input.value = '';
+    document.getElementById('send-btn').disabled = true;
+    addMessage('user', question);
+    addTyping();
+
+    try {
+      const res = await fetch('/api/ask?q=' + encodeURIComponent(question));
+      const data = await res.json();
+      document.getElementById('typing-indicator')?.remove();
+      addMessage('ai', data.answer || data.error || 'No response received.');
+    } catch (e) {
+      document.getElementById('typing-indicator')?.remove();
+      addMessage('ai', 'ERROR — Could not reach server.');
+    } finally {
+      document.getElementById('send-btn').disabled = false;
+      input.focus();
+    }
+  }
+</script>
+</body>
+</html>
